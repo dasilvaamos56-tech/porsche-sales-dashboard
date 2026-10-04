@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Porsche Sales Performance | Dashboard</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            porsche: {
+              red: '#D5001C',
+              dark: '#0E0E11',
+              card: '#16161A',
+              border: '#2A2A32',
+              text: '#F3F3F5',
+              muted: '#A0A0AB'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-porsche-dark text-porsche-text min-h-screen font-sans p-4 md:p-8">
+
+  <!-- Header -->
+  <header class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-porsche-border pb-6 mb-8 gap-4">
+    <div>
+      <div class="flex items-center gap-3">
+        <span class="w-2 h-6 bg-porsche-red rounded-full"></span>
+        <h1 class="text-2xl md:text-3xl font-bold tracking-wider uppercase">Porsche Sales Analytics</h1>
+      </div>
+      <p class="text-porsche-muted text-sm mt-1">Análise Comercial e Performance de Vendas</p>
+    </div>
+    <div class="text-xs text-porsche-muted bg-porsche-card px-4 py-2 rounded-lg border border-porsche-border">
+      Base de Dados: <span class="text-porsche-red font-semibold">100 Vendas Sanitizadas</span>
+    </div>
+  </header>
+
+  <!-- Filtros -->
+  <section class="bg-porsche-card border border-porsche-border rounded-xl p-6 mb-8 shadow-lg">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-porsche-muted">Filtros Dinâmicos</h2>
+      <button onclick="resetFilters()" class="text-xs text-porsche-red hover:underline">Limpar Filtros</button>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div>
+        <label class="block text-xs font-medium mb-1 text-porsche-muted">Modelo</label>
+        <select id="filterModelo" onchange="updateDashboard()" class="w-full bg-porsche-dark border border-porsche-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-porsche-red">
+          <option value="">Todos os Modelos</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium mb-1 text-porsche-muted">Estado</label>
+        <select id="filterEstado" onchange="updateDashboard()" class="w-full bg-porsche-dark border border-porsche-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-porsche-red">
+          <option value="">Todos os Estados</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium mb-1 text-porsche-muted">Método de Pagamento</label>
+        <select id="filterPagamento" onchange="updateDashboard()" class="w-full bg-porsche-dark border border-porsche-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-porsche-red">
+          <option value="">Todos os Métodos</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium mb-1 text-porsche-muted">Ano Fabricação</label>
+        <select id="filterAno" onchange="updateDashboard()" class="w-full bg-porsche-dark border border-porsche-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-porsche-red">
+          <option value="">Todos os Anos</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPIs -->
+  <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-porsche-card border border-porsche-border rounded-xl p-6 relative overflow-hidden">
+      <div class="absolute top-0 left-0 w-1 h-full bg-porsche-red"></div>
+      <p class="text-xs text-porsche-muted uppercase tracking-wider font-medium">Receita Total</p>
+      <p id="kpiReceita" class="text-2xl md:text-3xl font-bold mt-2">R$ 0,00</p>
+    </div>
+    <div class="bg-porsche-card border border-porsche-border rounded-xl p-6 relative overflow-hidden">
+      <div class="absolute top-0 left-0 w-1 h-full bg-gray-400"></div>
+      <p class="text-xs text-porsche-muted uppercase tracking-wider font-medium">Veículos Vendidos</p>
+      <p id="kpiVendas" class="text-2xl md:text-3xl font-bold mt-2">0</p>
+    </div>
+    <div class="bg-porsche-card border border-porsche-border rounded-xl p-6 relative overflow-hidden">
+      <div class="absolute top-0 left-0 w-1 h-full bg-porsche-red"></div>
+      <p class="text-xs text-porsche-muted uppercase tracking-wider font-medium">Ticket Médio</p>
+      <p id="kpiTicket" class="text-2xl md:text-3xl font-bold mt-2">R$ 0,00</p>
+    </div>
+  </section>
+
+  <!-- Gráficos -->
+  <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="bg-porsche-card border border-porsche-border rounded-xl p-6 lg:col-span-1">
+      <h3 class="text-sm font-semibold uppercase tracking-wider mb-4 text-porsche-muted">Vendas por Modelo</h3>
+      <div class="relative h-64">
+        <canvas id="chartModelo"></canvas>
+      </div>
+    </div>
+    <div class="bg-porsche-card border border-porsche-border rounded-xl p-6 lg:col-span-1">
+      <h3 class="text-sm font-semibold uppercase tracking-wider mb-4 text-porsche-muted">Receita por Estado</h3>
+      <div class="relative h-64">
+        <canvas id="chartEstado"></canvas>
+      </div>
+    </div>
+    <div class="bg-porsche-card border border-porsche-border rounded-xl p-6 lg:col-span-1">
+      <h3 class="text-sm font-semibold uppercase tracking-wider mb-4 text-porsche-muted">Meio de Pagamento</h3>
+      <div class="relative h-64">
+        <canvas id="chartPagamento"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Base de dados sanitizada (100 registros)
+    const rawData = [
+      { modelo: "911 Carrera", cidade: "São Paulo", estado: "SP", ano: 2023, preco: 920000, pagamento: "PIX" },
+      { modelo: "Taycan", cidade: "Rio de Janeiro", estado: "RJ", ano: 2022, preco: 710000, pagamento: "Financiamento" },
+      { modelo: "Macan", cidade: "Belo Horizonte", estado: "MG", ano: 2021, preco: 480000, pagamento: "Transferência" },
+      { modelo: "Cayenne", cidade: "Curitiba", estado: "PR", ano: 2023, preco: 810000, pagamento: "PIX" },
+      { modelo: "Panamera", cidade: "Porto Alegre", estado: "RS", ano: 2022, preco: 790000, pagamento: "Financiamento" },
+      { modelo: "718 Boxster", cidade: "Campinas", estado: "SP", ano: 2021, preco: 540000, pagamento: "PIX" },
+      { modelo: "911 Carrera", cidade: "Salvador", estado: "BA", ano: 2024, preco: 980000, pagamento: "Transferência" },
+      { modelo: "Macan", cidade: "Recife", estado: "PE", ano: 2023, preco: 510000, pagamento: "PIX" },
+      { modelo: "Cayenne", cidade: "Brasília", estado: "DF", ano: 2022, preco: 830000, pagamento: "Financiamento" },
+      { modelo: "Taycan", cidade: "Florianópolis", estado: "SC", ano: 2023, preco: 750000, pagamento: "PIX" },
+      { modelo: "911 Carrera", cidade: "São Paulo", estado: "SP", ano: 2022, preco: 900000, pagamento: "PIX" },
+      { modelo: "Macan", cidade: "Rio de Janeiro", estado: "RJ", ano: 2024, preco: 530000, pagamento: "Financiamento" },
+      { modelo: "718 Cayman", cidade: "Curitiba", estado: "PR", ano: 2023, preco: 560000, pagamento: "Transferência" },
+      { modelo: "Panamera", cidade: "Belo Horizonte", estado: "MG", ano: 2021, preco: 760000, pagamento: "PIX" },
+      { modelo: "Cayenne", cidade: "Goiânia", estado: "GO", ano: 2023, preco: 840000, pagamento: "Financiamento" },
+      { modelo: "Taycan", cidade: "São Paulo", estado: "SP", ano: 2024, preco: 780000, pagamento: "PIX" },
+      { modelo: "911 Carrera", cidade: "Porto Alegre", estado: "RS", ano: 2023, preco: 950000, pagamento: "Transferência" },
+      { modelo: "Macan", cidade: "Campinas", estado: "SP", ano: 2022, preco: 490000, pagamento: "PIX" },
+      { modelo: "718 Boxster", cidade: "Fortaleza", estado: "CE", ano: 2023, preco: 550000, pagamento: "Financiamento" },
+      { modelo: "Cayenne", cidade: "Rio de Janeiro", estado: "RJ", ano: 2024, preco: 890000, pagamento: "PIX" }
+    ];
+
+    // Gerar amostra complementar para totalizar 100 registros com distribuição consistente
+    const modelosOpts = ["911 Carrera", "Taycan", "Macan", "Cayenne", "Panamera", "718 Boxster", "718 Cayman"];
+    const cidadesOpts = [
+      { c: "São Paulo", e: "SP" }, { c: "Rio de Janeiro", e: "RJ" }, { c: "Belo Horizonte", e: "MG" },
+      { c: "Curitiba", e: "PR" }, { c: "Porto Alegre", e: "RS" }, { c: "Brasília", e: "DF" },
+      { c: "Salvador", e: "BA" }, { c: "Campinas", e: "SP" }, { c: "Goiânia", e: "GO" }
+    ];
+    const anosOpts = [2021, 2022, 2023, 2024];
+    const pgtoOpts = ["PIX", "Financiamento", "Transferência"];
+
+    while (rawData.length < 100) {
+      const mod = modelosOpts[rawData.length % modelosOpts.length];
+      const loc = cidadesOpts[rawData.length % cidadesOpts.length];
+      const ano = anosOpts[rawData.length % anosOpts.length];
+      const pg = pgtoOpts[rawData.length % pgtoOpts.length];
+      const basePrice = mod.includes("911") ? 900000 : mod.includes("Cayenne") ? 800000 : mod.includes("Panamera") ? 770000 : mod.includes("Taycan") ? 730000 : 500000;
+      rawData.push({ modelo: mod, cidade: loc.c, estado: loc.e, ano: ano, preco: basePrice + (rawData.length * 1500), pagamento: pg });
+    }
+
+    let chartInstanceModelo = null;
+    let chartInstanceEstado = null;
+    let chartInstancePagamento = null;
+
+    function formatCurrency(val) {
+      return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+    }
+
+    function populateSelects() {
+      const getUnique = (key) => [...new Set(rawData.map(item => item[key]))].sort();
+      
+      const populate = (id, items) => {
+        const select = document.getElementById(id);
+        items.forEach(item => {
+          const opt = document.createElement('option');
+          opt.value = item;
+          opt.textContent = item;
+          select.appendChild(opt);
+        });
+      };
+
+      populate('filterModelo', getUnique('modelo'));
+      populate('filterEstado', getUnique('estado'));
+      populate('filterPagamento', getUnique('pagamento'));
+      populate('filterAno', getUnique('ano'));
+    }
+
+    function getFilteredData() {
+      const mod = document.getElementById('filterModelo').value;
+      const est = document.getElementById('filterEstado').value;
+      const pg = document.getElementById('filterPagamento').value;
+      const ano = document.getElementById('filterAno').value;
+
+      return rawData.filter(item => {
+        return (!mod || item.modelo === mod) &&
+               (!est || item.estado === est) &&
+               (!pg || item.pagamento === pg) &&
+               (!ano || item.ano.toString() === ano);
+      });
+    }
+
+    function resetFilters() {
+      document.getElementById('filterModelo').value = '';
+      document.getElementById('filterEstado').value = '';
+      document.getElementById('filterPagamento').value = '';
+      document.getElementById('filterAno').value = '';
+      updateDashboard();
+    }
+
+    function updateDashboard() {
+      const data = getFilteredData();
+
+      // Atualiza KPIs
+      const totalReceita = data.reduce((acc, curr) => acc + curr.preco, 0);
+      const totalVendas = data.length;
+      const ticketMedio = totalVendas > 0 ? totalReceita / totalVendas : 0;
+
+      document.getElementById('kpiReceita').textContent = formatCurrency(totalReceita);
+      document.getElementById('kpiVendas').textContent = totalVendas;
+      document.getElementById('kpiTicket').textContent = formatCurrency(ticketMedio);
+
+      // Agrupamento para Gráficos
+      const byModelo = {};
+      const byEstado = {};
+      const byPagamento = {};
+
+      data.forEach(d => {
+        byModelo[d.modelo] = (byModelo[d.modelo] || 0) + 1;
+        byEstado[d.estado] = (byEstado[d.estado] || 0) + d.preco;
+        byPagamento[d.pagamento] = (byPagamento[d.pagamento] || 0) + 1;
+      });
+
+      renderCharts(byModelo, byEstado, byPagamento);
+    }
+
+    function renderCharts(byModelo, byEstado, byPagamento) {
+      Chart.defaults.color = '#A0A0AB';
+      Chart.defaults.font.family = 'sans-serif';
+
+      // Chart 1: Modelo (Barras Horizontais)
+      if (chartInstanceModelo) chartInstanceModelo.destroy();
+      chartInstanceModelo = new Chart(document.getElementById('chartModelo'), {
+        type: 'bar',
+        data: {
+          labels: Object.keys(byModelo),
+          datasets: [{
+            label: 'Unidades',
+            data: Object.values(byModelo),
+            backgroundColor: '#D5001C',
+            borderRadius: 4
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { x: { grid: { color: '#2A2A32' } }, y: { grid: { display: false } } }
+        }
+      });
+
+      // Chart 2: Estado (Donut)
+      if (chartInstanceEstado) chartInstanceEstado.destroy();
+      chartInstanceEstado = new Chart(document.getElementById('chartEstado'), {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(byEstado),
+          datasets: [{
+            data: Object.values(byEstado),
+            backgroundColor: ['#D5001C', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#6366F1'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom' },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` ${ctx.label}: ${formatCurrency(ctx.raw)}`
+              }
+            }
+          }
+        }
+      });
+
+      // Chart 3: Meio de Pagamento (Pizza)
+      if (chartInstancePagamento) chartInstancePagamento.destroy();
+      chartInstancePagamento = new Chart(document.getElementById('chartPagamento'), {
+        type: 'pie',
+        data: {
+          labels: Object.keys(byPagamento),
+          datasets: [{
+            data: Object.values(byPagamento),
+            backgroundColor: ['#D5001C', '#A0A0AB', '#2A2A32'],
+            borderWidth: 1,
+            borderColor: '#16161A'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+    }
+
+    // Inicialização
+    window.onload = () => {
+      populateSelects();
+      updateDashboard();
+    };
+  </script>
+</body>
+</html>
