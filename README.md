@@ -2,7 +2,7 @@
 
 Dashboard interativo desenvolvido para responder a perguntas estratégicas de negócio sobre as vendas da Porsche, utilizando um único arquivo HTML com **Tailwind CSS** e **Chart.js**.
 
-📍 **Dashboard On-line:** [Acesse a Dashboard publicada no GitHub Pages](https://dasilvaamos56-tech.github.io/seu-repositorio)
+📍 **Dashboard On-line:** [Acesse a Dashboard publicada no GitHub Pages](https://dasilvaamos56-tech.github.io/porsche-sales-analytics)
 
 ---
 
